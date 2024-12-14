@@ -46,7 +46,7 @@ async function main() {
     log("Successfully logged in to Bluesky!");
 
     await agent.post({
-      text: "He can always find one on loan. 🙂",
+      text: "Wagner did not interrupt once, did not nod or show disap-🕳️ ",
     });
 
     console.log("Just posted!");
