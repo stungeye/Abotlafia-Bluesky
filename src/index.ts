@@ -1,35 +1,30 @@
 import { BskyAgent } from "@atproto/api";
 import * as dotenv from "dotenv";
-import path from "path";
-import fs from "fs";
+import { log } from "./logger";
+import Abulafia from "./abulafia";
 
 // Load environment variables from .env file
 dotenv.config();
 
-// Ensure logs directory exists
-const logsDir = path.join(__dirname, "..", "logs");
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir);
-}
-
-// Setup logging
-const logFile = path.join(
-  logsDir,
-  `bot-${new Date().toISOString().split("T")[0]}.log`
-);
-const log = (message: string) => {
-  const timestamp = new Date().toISOString();
-  const logMessage = `${timestamp}: ${message}\n`;
-  fs.appendFileSync(logFile, logMessage);
-  console.log(message);
-};
-
 const agent = new BskyAgent({
   service: "https://bsky.social",
 });
-
 async function main() {
   try {
+    let abulafia = new Abulafia("database.sqlite", 1.0);
+
+    if (!abulafia.timeToPost()) {
+      log("Not time to post yet.");
+      return;
+    }
+
+    const post = await abulafia.generatePost();
+
+    if (!post || !post.words) {
+      log("No post to generate: " + JSON.stringify(post));
+      return;
+    }
+
     // Validate environment variables
     const username = process.env.BLUESKY_USERNAME;
     const password = process.env.BLUESKY_PASSWORD;
@@ -45,11 +40,13 @@ async function main() {
 
     log("Successfully logged in to Bluesky!");
 
-    await agent.post({
-      text: "Wagner did not interrupt once, did not nod or show disap-🕳️ ",
+    log("Posting: " + post.words);
+    const response = await agent.post({
+      text: post.words,
     });
 
-    console.log("Just posted!");
+    await abulafia.markPosted(post.id);
+    log(`Post with ID ${post.id} marked as tweeted.`);
 
     // Your bot logic will go here
   } catch (error) {
