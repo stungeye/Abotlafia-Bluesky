@@ -28,14 +28,14 @@ async function main() {
     const post = await abulafia.generatePost();
 
     if (!post || !post.words) {
-      log("No post to generate: " + JSON.stringify(post));
+      log("No post generated: " + JSON.stringify(post));
       return;
     }
 
     const symbol = abulafia.matchingSymbol(post.words, 0.1);
     const postSuccess = await bsky.postWords(post.words + symbol);
     if (postSuccess) {
-      log(`Post with ID ${post.id} marked as tweeted.`);
+      log(`Row with ID ${post.id} marked as tweeted.`);
       await abulafia.markPosted(post.id);
     }
   } catch (error) {

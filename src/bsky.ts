@@ -157,7 +157,7 @@ class BSky {
             parentCid
           );
           if (postSuccess) {
-            log(`Post with ID ${reply.id} marked as tweeted.`);
+            log(`Row with ID ${reply.id} marked as tweeted.`);
             await this.abu.markPosted(reply.id);
           }
 
