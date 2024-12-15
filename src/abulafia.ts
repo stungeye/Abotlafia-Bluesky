@@ -253,16 +253,18 @@ class Abulafia {
     );
   }
 
-  generatePost(): Promise<{
+  generatePost(requiredString = ""): Promise<{
     id: number;
     words: string;
     rating: number;
   } | null> {
+    const like = requiredString ? `AND words LIKE '%${requiredString}%'` : "";
     return new Promise((resolve, reject) => {
       const query = `
         SELECT id, words, rating 
         FROM sentences 
         WHERE moderated = false AND tweeted = false AND length(words) <= 300 
+        ${like}
         ORDER BY RANDOM() 
         LIMIT 1
       `;

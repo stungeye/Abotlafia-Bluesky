@@ -16,14 +16,15 @@ async function main() {
       throw new Error("Missing required environment variables");
     }
 
-    const bsky = await BSky.create(username, password);
+    let abulafia = new Abulafia("database.sqlite");
+    const bsky = await BSky.create(username, password, abulafia);
+    await bsky.processNotifications();
 
     if (!Abulafia.timeToPost(0.05)) {
       log("Not time to post yet.");
       return;
     }
 
-    let abulafia = new Abulafia("database.sqlite");
     const post = await abulafia.generatePost();
 
     if (!post || !post.words) {
