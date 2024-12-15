@@ -1,30 +1,13 @@
-import { BskyAgent } from "@atproto/api";
 import * as dotenv from "dotenv";
 import { log } from "./logger";
 import Abulafia from "./abulafia";
+import BSky from "./bsky";
 
 // Load environment variables from .env file
 dotenv.config();
 
-const agent = new BskyAgent({
-  service: "https://bsky.social",
-});
 async function main() {
   try {
-    let abulafia = new Abulafia("database.sqlite", 1.0);
-
-    if (!abulafia.timeToPost()) {
-      log("Not time to post yet.");
-      return;
-    }
-
-    const post = await abulafia.generatePost();
-
-    if (!post || !post.words) {
-      log("No post to generate: " + JSON.stringify(post));
-      return;
-    }
-
     // Validate environment variables
     const username = process.env.BLUESKY_USERNAME;
     const password = process.env.BLUESKY_PASSWORD;
@@ -33,24 +16,28 @@ async function main() {
       throw new Error("Missing required environment variables");
     }
 
-    await agent.login({
-      identifier: username,
-      password: password,
-    });
+    const bsky = await BSky.create(username, password);
 
-    log("Successfully logged in to Bluesky!");
+    if (!Abulafia.timeToPost(0.05)) {
+      log("Not time to post yet.");
+      return;
+    }
 
-    log("Posting: " + post.words);
-    const response = await agent.post({
-      text: post.words,
-    });
+    let abulafia = new Abulafia("database.sqlite");
+    const post = await abulafia.generatePost();
 
-    await abulafia.markPosted(post.id);
-    log(`Post with ID ${post.id} marked as tweeted.`);
+    if (!post || !post.words) {
+      log("No post to generate: " + JSON.stringify(post));
+      return;
+    }
 
-    // Your bot logic will go here
+    const symbol = abulafia.matchingSymbol(post.words, 0.1);
+    const postSuccess = await bsky.postWords(post.words + symbol);
+    if (postSuccess) {
+      log(`Post with ID ${post.id} marked as tweeted.`);
+      await abulafia.markPosted(post.id);
+    }
   } catch (error) {
-    log(`Error: ${error instanceof Error ? error.message : String(error)}`);
     // Exit with error code for cron to detect failure
     process.exit(1);
   }

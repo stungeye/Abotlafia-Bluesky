@@ -1,12 +1,233 @@
 import sqlite3 from "sqlite3";
 import { log } from "./logger";
 
+const mysticalSymbols = [
+  // Alchemy Symbols (U+1F700–U+1F77F)
+  "🜁",
+  "🜂",
+  "🜃",
+  "🜄",
+  "🜅",
+  "🜆",
+  "🜇",
+  "🜈",
+  "🜉",
+  "🜊",
+  "🜋",
+  "🜌",
+  "🜍",
+  "🜎",
+  "🜏",
+  "🜐",
+  "🜑",
+  "🜒",
+  "🜓",
+  "🜔",
+  "🜕",
+  "🜖",
+  "🜗",
+  "🜘",
+  "🜙",
+  "🜚",
+  "🜛",
+  "🜜",
+  "🜝",
+  "🜞",
+  "🜟",
+  "🜠",
+  "🜡",
+  "🜢",
+  "🜣",
+  "🜤",
+  "🜥",
+  "🜦",
+  "🜧",
+  "🜨",
+  "🜩",
+  "🜪",
+  "🜫",
+  "🜬",
+  "🜭",
+  "🜮",
+  "🜯",
+  "🜰",
+  "🜱",
+  "🜲",
+  "🜳",
+  "🜴",
+  "🜵",
+  "🜶",
+  "🜷",
+  "🜸",
+  "🜹",
+  "🜺",
+  "🜻",
+  "🜼",
+  "🜽",
+  "🜾",
+  "🜿",
+
+  // Astrological Symbols
+  "☉",
+  "☾",
+  "☽",
+  "☿",
+  "♀",
+  "♂",
+  "♃",
+  "♄",
+  "♅",
+  "♆",
+  "♇",
+  "☋",
+  "☊",
+  "⊛",
+  "⚷",
+  "⚸",
+  "⚹",
+  "⚵",
+  "⚶",
+  "⚳",
+  "⚴",
+
+  // Zodiac Symbols (U+2648–U+2653)
+  "♈",
+  "♉",
+  "♊",
+  "♋",
+  "♌",
+  "♍",
+  "♎",
+  "♏",
+  "♐",
+  "♑",
+  "♒",
+  "♓",
+
+  // Geomantic and Esoteric Shapes
+  "⚰",
+  "⚱",
+  "⛤",
+  "⛧",
+  "⛨",
+
+  // I Ching Hexagrams (U+4DC0–U+4DFF)
+  "䷀",
+  "䷁",
+  "䷂",
+  "䷃",
+  "䷄",
+  "䷅",
+  "䷆",
+  "䷇",
+  "䷈",
+  "䷉",
+  "䷊",
+  "䷋",
+  "䷌",
+  "䷍",
+  "䷎",
+  "䷏",
+  "䷐",
+  "䷑",
+  "䷒",
+  "䷓",
+  "䷔",
+  "䷕",
+  "䷖",
+  "䷗",
+  "䷘",
+  "䷙",
+  "䷚",
+  "䷛",
+  "䷜",
+  "䷝",
+  "䷞",
+  "䷟",
+  "䷠",
+  "䷡",
+  "䷢",
+  "䷣",
+  "䷤",
+  "䷥",
+  "䷦",
+  "䷧",
+  "䷨",
+  "䷩",
+  "䷪",
+  "䷫",
+  "䷬",
+  "䷭",
+  "䷮",
+  "䷯",
+  "䷰",
+  "䷱",
+  "䷲",
+  "䷳",
+  "䷴",
+  "䷵",
+  "䷶",
+  "䷷",
+  "䷸",
+  "䷹",
+  "䷺",
+  "䷻",
+  "䷼",
+  "䷽",
+  "䷾",
+  "䷿",
+
+  // Runic Symbols (U+16A0–U+16FF)
+  "ᚠ",
+  "ᚢ",
+  "ᚦ",
+  "ᚨ",
+  "ᚱ",
+  "ᚲ",
+  "ᚷ",
+  "ᚹ",
+  "ᚺ",
+  "ᚻ",
+  "ᚾ",
+  "ᛁ",
+  "ᛃ",
+  "ᛇ",
+  "ᛈ",
+  "ᛋ",
+  "ᛏ",
+  "ᛒ",
+  "ᛖ",
+  "ᛗ",
+  "ᛚ",
+  "ᛜ",
+  "ᛞ",
+
+  // Religious and Mystical Symbols
+  "☥",
+  "⚚",
+  "⚜",
+  "⚛",
+  "☯",
+  "☮",
+  "✞",
+
+  // Mystical Stars
+  "✸",
+  "✹",
+  "✺",
+  "✵",
+
+  // Miscellaneous Esoteric
+  "⚔",
+  "⚖",
+  "⚗",
+  "⚙",
+];
+
 class Abulafia {
   private db: sqlite3.Database;
-  private postProbability: number;
 
-  constructor(filename: string, postProbability = 0.02) {
-    this.postProbability = postProbability;
+  constructor(filename: string) {
     this.db = new sqlite3.Database(filename, (err) => {
       if (err) {
         if (err instanceof Error) {
@@ -20,8 +241,16 @@ class Abulafia {
     });
   }
 
-  timeToPost(): boolean {
-    return Math.random() < this.postProbability;
+  static timeToPost(postProbability: number): boolean {
+    return Math.random() < postProbability;
+  }
+
+  matchingSymbol(word: string, symbolProbability: number): string {
+    if (symbolProbability < 1 && Math.random() < 1 - symbolProbability)
+      return "";
+    return (
+      " " + mysticalSymbols[Math.floor(Math.random() * mysticalSymbols.length)]
+    );
   }
 
   generatePost(): Promise<{
