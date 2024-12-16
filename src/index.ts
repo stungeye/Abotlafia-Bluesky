@@ -15,12 +15,22 @@ async function main() {
     if (!username || !password) {
       throw new Error("Missing required environment variables");
     }
+    const timeForNotifications = Abulafia.timeToPost(0.25);
+    const timeForPost = Abulafia.timeToPost(0.025);
+
+    if (!timeForNotifications && !timeForPost) {
+      log("Not time to post or process notifications yet.");
+      return;
+    }
 
     let abulafia = new Abulafia("database.sqlite");
     const bsky = await BSky.create(username, password, abulafia);
-    await bsky.processNotifications();
 
-    if (!Abulafia.timeToPost(0.05)) {
+    if (timeForNotifications) {
+      await bsky.processNotifications();
+    }
+
+    if (!timeForPost) {
       log("Not time to post yet.");
       return;
     }
